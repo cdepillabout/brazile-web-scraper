@@ -1,16 +1,14 @@
 { haskellPackages ? (import <nixpkgs> {}).haskellPackages }:
-let
-  inherit (haskellPackages) cabal cabalInstall
-    text mtl transformers; # Haskell dependencies here
 
-in cabal.mkDerivation (self: {
+haskellPackages.cabal.mkDerivation (self: {
   pname = "brazile-web-scraping";
   version = "1.0.0";
   src = ./.;
-  buildDepends = [
-    # As imported above
-    text mtl transformers
+  buildDepends = with haskellPackages; [
+	mtl
+	transformers
+    text
   ];
-  buildTools = [ cabalInstall ];
+  buildTools = with haskellPackages; [ cabalInstall ];
   enableSplitObjs = false;
 })
