@@ -5,6 +5,8 @@ haskellPackages.cabal.mkDerivation (self: {
   version = "1.0.0";
   src = ./.;
   buildDepends = with haskellPackages; [
+	ghcMod_5_0_1_2
+    httpClient
 	mtl
 	transformers
     text
