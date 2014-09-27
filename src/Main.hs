@@ -31,7 +31,7 @@ main = do
     request = parseUrl $ siteUrl ++ show (1::Integer)
 
     doRequests :: Manager -> IO ()
-    doRequests manager = do 
+    doRequests manager = do
         req <- request
         withResponse req manager doResponse
 
