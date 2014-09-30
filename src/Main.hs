@@ -1,6 +1,10 @@
 {-# LANGUAGE OverloadedStrings, ScopedTypeVariables #-}
 
-import Control.Exception (catch, handle, IOException)
+import Control.Concurrent (forkIO)
+import Control.Concurrent.Chan (Chan, newChan, readChan, writeChan, writeList2Chan)
+import Control.Exception (catch, IOException)
+import Control.Monad (forever, forM_, when)
+--import Debug.Trace (traceIO)
 import Network.HTTP.Client (BodyReader, defaultManagerSettings, HttpException, Manager, managerConnCount, managerResponseTimeout, parseUrl, Request, Response, responseBody, withManager, withResponse)
 import qualified Data.ByteString.Lazy as ByteStringLazy
 import qualified Data.ByteString as ByteStringStrict
@@ -19,7 +23,11 @@ start :: Int
 start = 1
 
 total :: Int
-total = 132028
+--total = 132028
+total = 200
+
+allRequestNumbers :: [Int]
+allRequestNumbers = [start .. total]
 
 printStatusEvery :: Int
 printStatusEvery = 10
@@ -28,7 +36,7 @@ downloadLimitBytes :: Int
 downloadLimitBytes = 50000
 
 concurrentConnectionCount :: Int
-concurrentConnectionCount = 40
+concurrentConnectionCount = 20
 
 responseTimeoutSeconds :: Int
 responseTimeoutSeconds = 60
@@ -38,10 +46,10 @@ responseTimeoutSeconds = 60
 -------------------------------------------------------------------
 
 outFilePath :: Int -> FilePath
-outFilePath num = printf "output/site/%06d.html" num
+outFilePath = printf "output/site/%06d.html"
 
 errFilePath :: Int -> FilePath
-errFilePath num = printf "output/err/%06d.html" num
+errFilePath = printf "output/err/%06d.html"
 
 request :: Int -> IO Request
 request pageNum = parseUrl $ siteUrl ++ show pageNum
@@ -58,25 +66,50 @@ brReadSome brRead =
                 then return $ ByteStringLazy.fromChunks $ front []
                 else loop (front . (bs:)) (remainder - ByteStringStrict.length bs)
 
+
+threadPoolIO :: Int -> (a -> IO ()) -> IO (Chan a, Chan ())
+threadPoolIO nr mutator = do
+    inputChan <- newChan
+    outputChan <- newChan
+    forM_ [1..nr] $
+        \_ -> forkIO (forever $ do
+            i <- readChan inputChan
+            o <- mutator i
+            writeChan outputChan o)
+    return (inputChan, outputChan)
+
 -------------------------------------------------------------------
 -- file downloading functions
 -------------------------------------------------------------------
 
-doRequests :: Manager -> IO ()
-doRequests manager = do
-    let reqNum = 1
+doResponse :: Int -> Response BodyReader -> IO ()
+doResponse reqNum response =
+    catch (doResponse' >> printStatus) errHandler
+  where
+    printStatus :: IO ()
+    printStatus = when (reqNum `mod` printStatusEvery == 0) $ print reqNum
+
+    doResponse' :: IO ()
+    doResponse' = withFile (outFilePath reqNum) WriteMode $ \fileHandle -> do
+              let lazybody = responseBody response
+              body <- brReadSome lazybody downloadLimitBytes
+              ByteStringLazy.hPut fileHandle body
+              ByteStringLazy.hPut fileHandle "\n"
+
+    errHandler :: IOException -> IO ()
+    errHandler err = writeFile (errFilePath reqNum) $ show err ++ "\n"
+
+doRequest :: (Manager, Int) -> IO ()
+doRequest (manager, reqNum) = do
     req <- request reqNum
     catch (withResponse req manager $ doResponse reqNum)
           (\err -> writeFile (errFilePath reqNum) $ show (err::HttpException) ++ "\n")
 
-doResponse :: Int -> Response BodyReader -> IO ()
-doResponse reqNum response = do
-    handle (\err -> writeFile (errFilePath reqNum) $ show (err::IOException) ++ "\n")
-           (withFile (outFilePath reqNum) WriteMode $ \fileHandle -> do
-              let lazybody = responseBody response
-              body <- brReadSome lazybody downloadLimitBytes
-              ByteStringLazy.hPut fileHandle body
-              ByteStringLazy.hPut fileHandle "\n")
+doRequestsThreadPool :: Manager -> IO ()
+doRequestsThreadPool manager = do
+    (inputChan, outputChan) <- threadPoolIO concurrentConnectionCount doRequest
+    _ <- writeList2Chan inputChan $ zip (repeat manager) allRequestNumbers
+    mapM_ (\_ -> readChan outputChan) allRequestNumbers
 
 -------------------------------------------------------------------
 -- main
@@ -88,5 +121,5 @@ main = do
           { managerConnCount = concurrentConnectionCount
           , managerResponseTimeout = Just $ responseTimeoutSeconds * 1000000
           }
-    withManager managerSettings doRequests
+    withManager managerSettings doRequestsThreadPool
 
