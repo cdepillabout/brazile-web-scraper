@@ -23,20 +23,19 @@ start :: Int
 start = 1
 
 total :: Int
---total = 132028
-total = 200
+total = 132028
 
 allRequestNumbers :: [Int]
 allRequestNumbers = [start .. total]
 
 printStatusEvery :: Int
-printStatusEvery = 10
+printStatusEvery = 500
 
 downloadLimitBytes :: Int
 downloadLimitBytes = 50000
 
 concurrentConnectionCount :: Int
-concurrentConnectionCount = 20
+concurrentConnectionCount = 10
 
 responseTimeoutSeconds :: Int
 responseTimeoutSeconds = 60
