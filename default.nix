@@ -2,10 +2,11 @@
 
 haskellPackages.cabal.mkDerivation (self: {
   pname = "brazile-web-scraping";
-  version = "1.0.0";
-  src = ./.;
+  version = "1.0.1";
+  #src = ./.;
+  src = builtins.filterSource (path: type: baseNameOf path != "output") ./.;
   buildDepends = with haskellPackages; [
-    ghcMod_5_0_1_2
+    ghcMod #_5_0_1_2
     httpClient
     mtl
     transformers
