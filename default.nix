@@ -6,7 +6,7 @@ haskellPackages.cabal.mkDerivation (self: {
   #src = ./.;
   src = builtins.filterSource (path: type: baseNameOf path != "output") ./.;
   buildDepends = with haskellPackages; [
-    ghcMod #_5_0_1_2
+    ghcMod_5_0_1_2
     htmlConduit
     httpClient
     mtl
