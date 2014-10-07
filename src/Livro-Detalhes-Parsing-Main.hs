@@ -1,28 +1,23 @@
 {-# LANGUAGE OverloadedStrings, ScopedTypeVariables #-}
 
-import Control.Concurrent (forkIO, threadDelay)
+import Control.Concurrent (forkIO)
 import Control.Concurrent.Chan (Chan, newChan, readChan, writeChan, writeList2Chan)
 import Control.Exception (catch, IOException)
 import Control.Monad (forever, forM_, when)
 import Data.Functor ((<$>))
 import Data.String (fromString)
+import qualified Data.Text as Text
+import qualified Data.Text.IO as TextIO
 --import Debug.Trace (traceIO)
-import qualified Data.ByteString as ByteStringStrict
 import System.IO (withFile, IOMode(WriteMode))
 import qualified Text.HTML.DOM as TextHTMLDOM
 import Text.Printf (printf)
-import Text.XML.Cursor (fromDocument)
+import Text.XML.Cursor (($/), ($//), (&|), (&/), (>=>), child, content, Cursor, element, fromDocument, node)
 
 
 -------------------------------------------------------------------
 -- Constants
 -------------------------------------------------------------------
-
-allDetailsPath :: String
-allDetailsPath = "all_livrodetalhes_sorted_uniq"
-
-siteUrl :: String
-siteUrl = "http://museudaimigracao.org.br/acervodigital/"
 
 start :: Int
 start = 1
@@ -84,7 +79,30 @@ doParse reqNum = doParse' >> printStatus
     doParse' = do
       document <- TextHTMLDOM.readFile $ fromString $ inFilePath reqNum
       let cursor = fromDocument document
+      --let familyData = concat $ cursor $// findNodes &| content
+      let familyData = cursor $// findNodes &| child &| content
+      let fixedFamilyData = fixFamilyData familyData
+      print $ length fixedFamilyData
+      print fixedFamilyData
+      -- TODO: Take out uneeded spaces (strip)
+      TextIO.putStrLn $ Text.intercalate " ; " fixedFamilyData
+      -- forM_ (concat familyData) $ \familyDatum -> do
+      --   TextIO.putStrLn who
+      --   putStrLn "-------------------------------------"
       return ()
+
+    fixElement :: [[Text.Text]] -> Text.Text
+    fixElement [] = ""
+    fixElement a = Text.concat $ concat a
+
+    fixFamilyData :: [[[Text.Text]]] -> [Text.Text]
+    fixFamilyData = map fixElement
+
+    findNodes :: Cursor -> [Cursor]
+    --findNodes = element "tr" >=> child
+    --findNodes = element "tr" >=> child &/ element "div" >=> child
+    findNodes = element "tr" >=> child &/ element "div"
+
 
 doParseWrapper :: Int -> IO ()
 doParseWrapper reqNum = do
