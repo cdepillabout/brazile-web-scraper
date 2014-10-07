@@ -29,8 +29,21 @@ executable brazile-web-scraping-search-results
   hs-source-dirs:      src
   default-language:    Haskell2010
 
-executable brazile-web-scraping-search-results
+executable brazile-web-scraping-livro-detalhes
   main-is:             Livro-Detalhes-Main.hs
+  -- other-modules:       
+  -- other-extensions:    
+  build-depends:       base >=4.7 && <4.8
+                     , bytestring
+                     , http-client
+  ghc-options:         -Wall
+                       -threaded
+                       -rtsopts
+  hs-source-dirs:      src
+  default-language:    Haskell2010
+
+executable brazile-parsing-livro-detalhes
+  main-is:             Livro-Detalhes-Parsing-Main.hs
   -- other-modules:       
   -- other-extensions:    
   build-depends:       base >=4.7 && <4.8
