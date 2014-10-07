@@ -48,7 +48,8 @@ executable brazile-parsing-livro-detalhes
   -- other-extensions:    
   build-depends:       base >=4.7 && <4.8
                      , bytestring
-                     , http-client
+                     , html-conduit
+                     , xml-conduit
   ghc-options:         -Wall
                        -threaded
                        -rtsopts

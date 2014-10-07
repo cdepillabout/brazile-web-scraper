@@ -7,10 +7,12 @@ haskellPackages.cabal.mkDerivation (self: {
   src = builtins.filterSource (path: type: baseNameOf path != "output") ./.;
   buildDepends = with haskellPackages; [
     ghcMod #_5_0_1_2
+    htmlConduit
     httpClient
     mtl
     transformers
     text
+    xmlConduit
   ];
   buildTools = with haskellPackages; [ cabalInstall ];
   enableSplitObjs = false;
