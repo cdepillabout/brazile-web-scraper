@@ -1,2 +1,40 @@
 
 Web scrapper for http://museudaimigracao.org.br/acervodigital/livros.php.
+
+
+(1) First, the search results have to be scrapped to return all the links to
+individual family info.  The html of the search results will be stored in
+output/site/.  Errors will be stored in output/err/.  There are 132028 html
+pages total.  It takes about a week to download.
+
+$ cabal build && echo && date && time ./dist/build/brazile-web-scraping-search-results/brazile-web-scraping-search-results 2>downloaderrors.log
+
+
+
+(2) Next, go through all the pages that have been downloaded and pull out the
+livrodetalhe.php links.
+
+$ cd output/site/ && ls -1 | while read line ; do egrep -o '"livrodetalhe.php\?livro=(.)*&pagina=(.)*&familia=(.)*" t' "${line}" ; done | cut -f2 -d\" | sort | uniq > ../../all_livrodetalhes_sorted_uniq
+
+
+
+(3) Now download all the information for each family (and all the family
+members).  The output will be stored in output/detalhes/ and errors will be
+stored in output/err/.  There are 488562 html pages.
+
+$ cabal build && echo && date && time ./dist/build/brazile-web-scraping-livro-detalhes/brazile-web-scraping-livro-detalhes 2>downloaderrors.log
+
+
+
+(4) Next, the data for each family can be parsed and extracted.  This will
+create the file output/family-parsed-output.
+
+$ cabal build && echo && date && time ./dist/build/brazile-parsing-livro-detalhes/brazile-parsing-livro-detalhes 2>downloaderrors.log > output/family-parsed-output
+
+
+
+(5) Finally, the data for each individual family member can be parsed and
+extracted.  This will create the file output/member-parsed-output.
+
+$ cabal build && echo && date && time ./dist/build/brazile-parsing-member-details/brazile-parsing-member-details 2>downloaderrors.log > output/member-parsed-output
+
