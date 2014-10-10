@@ -21,8 +21,8 @@ start :: Int
 start = 1
 
 total :: Int
-total = 20
---total = 3
+--total = 20
+total = 1
 
 allRequestNumbers :: [Int]
 allRequestNumbers = [start .. total]
@@ -62,11 +62,16 @@ doParse reqNum = doParse'
     doParse' = do
       document <- TextHTMLDOM.readFile $ fromString $ inFilePath reqNum
       let cursor = fromDocument document
-      let familyData = cursor $// findNodes &| child &| content
-      let fixedFamilyData = (Text.pack . show $ reqNum) : fixFamilyData familyData
+      --let familyData = cursor $// findNodes &| child &| content
+      let familyData = cursor $// element "table" >=> attributeIs "width" "908" &// element "tr" &/ element "td" >=> attributeIs "class" "texto" >=> attributeIs "align" "left" &/ content
+      -- this works, but the result is hard to work with
+      -- let familyData = cursor $// element "table" &| attributeIs "width" "908" &// element "tr" &/ element "td" &| attributeIs "class" "texto" &| attributeIs "align" "left" &/ content
+      print $ length familyData
+      print familyData
+      --let fixedFamilyData = (Text.pack . show $ reqNum) : fixFamilyData familyData
       --print $ length fixedFamilyData
       --print fixedFamilyData
-      TextIO.putStrLn $ Text.intercalate " ; " $ map Text.strip fixedFamilyData
+      --TextIO.putStrLn $ Text.intercalate " ; " $ map Text.strip fixedFamilyData
       return ()
 
     fixElement :: [[Text.Text]] -> Text.Text
@@ -79,7 +84,7 @@ doParse reqNum = doParse'
     findNodes :: Cursor -> [Cursor]
     --findNodes = element "tr" >=> child
     --findNodes = element "tr" >=> child &/ element "div" >=> child
-    findNodes = element "tr" >=> child &/ element "div"
+    findNodes = element "tr" >=> child &/ element "td"
 
 
 doParseWrapper :: Int -> IO ()
@@ -99,5 +104,5 @@ runThreadPool = do
 
 main :: IO ()
 main = do
-    putStrLn "FamilyID ; Livro ; Página ; Família ; Número Ordem ; Chefe ; Sobrenome ; Nome ; Parentesco ; Nacionalidade ; Idade ; Estado Civil ; Procedência ; Destino ; Vapor ; Chegada ; Nacion. Trad ; ContaGov ; Sexo ; Religião ; Ler ; Profissão ; Fazendeiro ; Observação ; Notas ; Dest_Est ; Res_Local ; Res_Pais ; Res_Tempo ; DesemBra ; Não Bra ; Bra_Lugar ; Bra_Tempo ; PQEntraram ; Repatriado ; Porto Emb. ;  Ferrovia ; Data Nasc. ;  Data Part. ;  Filiação ; Introductor ; Condição ; Lugar Nasc."
+    putStrLn "FamilyID ; Livro ; Página ; Família ; Chegada ; Sobrenome ; Nome ; Idade ; Sexo ; Parentesco ; Nacionalidade ; Vapor ; Est.Civil ; Religião"
     runThreadPool
