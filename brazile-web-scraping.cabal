@@ -56,3 +56,18 @@ executable brazile-parsing-livro-detalhes
                        -rtsopts
   hs-source-dirs:      src
   default-language:    Haskell2010
+
+executable brazile-parsing-member-details
+  main-is:             Member-Details-Parsing-Main.hs
+  -- other-modules:       
+  -- other-extensions:    
+  build-depends:       base >=4.7 && <4.8
+                     , bytestring
+                     , html-conduit
+                     , text
+                     , xml-conduit
+  ghc-options:         -Wall
+                       -threaded
+                       -rtsopts
+  hs-source-dirs:      src
+  default-language:    Haskell2010
