@@ -12,7 +12,7 @@ import qualified Data.Text.IO as TextIO
 import System.IO (withFile, IOMode(WriteMode))
 import qualified Text.HTML.DOM as TextHTMLDOM
 import Text.Printf (printf)
-import Text.XML.Cursor (($/), ($//), (&|), (&/), (>=>), child, content, Cursor, element, fromDocument, node)
+import Text.XML.Cursor (($//), (&|), (&/), (>=>), child, content, Cursor, element, fromDocument)
 
 
 -------------------------------------------------------------------
@@ -23,8 +23,8 @@ start :: Int
 start = 1
 
 total :: Int
--- total = 20
-total = 1
+total = 20
+--total = 3
 
 allRequestNumbers :: [Int]
 allRequestNumbers = [start .. total]
@@ -67,7 +67,8 @@ doParse :: Int -> IO ()
 doParse reqNum = doParse' >> printStatus
   where
     printStatus :: IO ()
-    printStatus = when (reqNum `mod` printStatusEvery == 0) $ print reqNum
+    --printStatus = when (reqNum `mod` printStatusEvery == 0) $ print reqNum
+    printStatus = return ()
 
     doParse' :: IO ()
     -- doParse' = withFile (outFilePath reqNum) WriteMode $ \outFileHandle -> do
@@ -79,16 +80,11 @@ doParse reqNum = doParse' >> printStatus
     doParse' = do
       document <- TextHTMLDOM.readFile $ fromString $ inFilePath reqNum
       let cursor = fromDocument document
-      --let familyData = concat $ cursor $// findNodes &| content
       let familyData = cursor $// findNodes &| child &| content
-      let fixedFamilyData = fixFamilyData familyData
-      print $ length fixedFamilyData
-      print fixedFamilyData
-      -- TODO: Take out uneeded spaces (strip)
-      TextIO.putStrLn $ Text.intercalate " ; " fixedFamilyData
-      -- forM_ (concat familyData) $ \familyDatum -> do
-      --   TextIO.putStrLn who
-      --   putStrLn "-------------------------------------"
+      let fixedFamilyData = (Text.pack $ show reqNum) : fixFamilyData familyData
+      --print $ length fixedFamilyData
+      --print fixedFamilyData
+      TextIO.putStrLn $ Text.intercalate " ; " $ map Text.strip fixedFamilyData
       return ()
 
     fixElement :: [[Text.Text]] -> Text.Text
@@ -120,4 +116,6 @@ runThreadPool = do
 -------------------------------------------------------------------
 
 main :: IO ()
-main = runThreadPool
+main = do
+    putStrLn "FamilyID ; Livro ; Página ; Família ; Número Ordem ; Chefe ; Sobrenome ; Nome ; Parentesco ; Nacionalidade ; Idade ; Estado Civil ; Procedência ; Destino ; Vapor ; Chegada ; Nacion. Trad ; ContaGov ; Sexo ; Religião ; Ler ; Profissão ; Fazendeiro ; Observação ; Notas ; Dest_Est ; Res_Local ; Res_Pais ; Res_Tempo ; DesemBra ; Não Bra ; Bra_Lugar ; Bra_Tempo ; PQEntraram ; Repatriado ; Porto Emb. ;  Ferrovia ; Data Nasc. ;  Data Part. ;  Filiação ; Introductor ; Condição ; Lugar Nasc."
+    runThreadPool
