@@ -3,14 +3,15 @@
 import Control.Concurrent (forkIO)
 import Control.Concurrent.Chan (Chan, newChan, readChan, writeChan, writeList2Chan)
 import Control.Exception (catch, IOException)
-import Control.Monad (forever, forM_)
+import Control.Monad (forever, forM_, when)
 import Data.String (fromString)
 import qualified Data.Text as Text
 import qualified Data.Text.IO as TextIO
 --import Debug.Trace (traceIO)
+import System.IO (hPutStrLn, stderr)
 import qualified Text.HTML.DOM as TextHTMLDOM
 import Text.Printf (printf)
-import Text.XML.Cursor (($//), (&|), (&/), (>=>), child, content, Cursor, element, fromDocument)
+import Text.XML.Cursor (($//), (&/), (&//), (>=>), attributeIs, child, content, Cursor, element, fromDocument)
 
 
 -------------------------------------------------------------------
@@ -51,6 +52,13 @@ threadPoolIO nr mutator = do
             writeChan outputChan o)
     return (inputChan, outputChan)
 
+chunksOf :: Int -> [a] -> [[a]]
+chunksOf num = go
+  where
+        go xs = case splitAt num xs of
+                 (a,b) | null a    -> []
+                       | otherwise -> a : go b
+
 -------------------------------------------------------------------
 -- file downloading functions
 -------------------------------------------------------------------
@@ -62,30 +70,31 @@ doParse reqNum = doParse'
     doParse' = do
       document <- TextHTMLDOM.readFile $ fromString $ inFilePath reqNum
       let cursor = fromDocument document
-      --let familyData = cursor $// findNodes &| child &| content
-      let familyData = cursor $// element "table" >=> attributeIs "width" "908" &// element "tr" &/ element "td" >=> attributeIs "class" "texto" >=> attributeIs "align" "left" &/ content
-      -- this works, but the result is hard to work with
-      -- let familyData = cursor $// element "table" &| attributeIs "width" "908" &// element "tr" &/ element "td" &| attributeIs "class" "texto" &| attributeIs "align" "left" &/ content
-      print $ length familyData
+      let familyData = cursor $// findNodes &/ content
+      when (null familyData) $ do
+        let familyDataString = show familyData
+            errorMessage = "error: length for familyData from " ++ show reqNum ++ " is 0: "
+        hPutStrLn stderr $ errorMessage ++ familyDataString
+      --print $ length familyData
       print familyData
-      --let fixedFamilyData = (Text.pack . show $ reqNum) : fixFamilyData familyData
-      --print $ length fixedFamilyData
-      --print fixedFamilyData
-      --TextIO.putStrLn $ Text.intercalate " ; " $ map Text.strip fixedFamilyData
-      return ()
-
-    fixElement :: [[Text.Text]] -> Text.Text
-    fixElement [] = ""
-    fixElement a = Text.concat $ concat a
-
-    fixFamilyData :: [[[Text.Text]]] -> [Text.Text]
-    fixFamilyData = map fixElement
+      let chunkedFamilyData = chunksOf 13 familyData
+      forM_ chunkedFamilyData $ \chunk ->
+        if (length chunk /= 13)
+          then
+            let chunkString = show chunk
+                errorMessage = "error: length of chunk from " ++ show reqNum ++ " is not 13: "
+            in hPutStrLn stderr $ errorMessage ++ chunkString
+          else
+            TextIO.putStrLn $ Text.intercalate " ; " $ map Text.strip chunk
 
     findNodes :: Cursor -> [Cursor]
-    --findNodes = element "tr" >=> child
-    --findNodes = element "tr" >=> child &/ element "div" >=> child
-    findNodes = element "tr" >=> child &/ element "td"
+    --findNodes = element "tr" >=> child &/ element "td"
+    findNodes =
+        element "table" >=> attributeIs "width" "908" &//
+            element "tr" &/
+                element "td" >=> attributeIs "class" "texto" >=> attributeIs "align" "left"
 
+-- concat $ concatMap (\x -> if x == [] then [[" "]] else x) $ map (child &| content) $ cursor $// element "table" >=> attributeIs "width" "908" &// element "tr" &/ element "td" >=> attributeIs "class" "texto" >=> attributeIs "align" "left"
 
 doParseWrapper :: Int -> IO ()
 doParseWrapper reqNum =
