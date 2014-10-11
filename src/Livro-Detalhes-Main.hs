@@ -26,22 +26,22 @@ start :: Int
 start = 1
 
 total :: Int
-total = 20
+total = 1000
 
 allRequestNumbers :: [Int]
 allRequestNumbers = [start .. total]
 
 printStatusEvery :: Int
-printStatusEvery = 1
+printStatusEvery = 50
 
 concurrentConnectionCount :: Int
-concurrentConnectionCount = 3
+concurrentConnectionCount = 6
 
 responseTimeoutSeconds :: Int
 responseTimeoutSeconds = 120
 
 threadSleepSeconds :: Int
-threadSleepSeconds = 10
+threadSleepSeconds = 1
 
 -------------------------------------------------------------------
 -- Helper functions
