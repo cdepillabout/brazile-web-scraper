@@ -23,6 +23,7 @@ executable brazile-web-scraping-search-results
   build-depends:       base >=4.7 && <4.8
                      , bytestring
                      , http-client
+                     , mtl
   ghc-options:         -Wall
                        -threaded
                        -rtsopts

@@ -26,13 +26,13 @@ start :: Int
 start = 1
 
 total :: Int
-total = 1000
+total = 488562
 
 allRequestNumbers :: [Int]
 allRequestNumbers = [start .. total]
 
 printStatusEvery :: Int
-printStatusEvery = 50
+printStatusEvery = 10000
 
 concurrentConnectionCount :: Int
 concurrentConnectionCount = 6
