@@ -22,14 +22,29 @@ allDetailsPath = "all_livrodetalhes_sorted_uniq"
 siteUrl :: String
 siteUrl = "http://museudaimigracao.org.br/acervodigital/"
 
-start :: Int
-start = 1
+-- start :: Int
+-- start = 1
 
-total :: Int
-total = 488562
+-- total :: Int
+-- total = 488562
 
 allRequestNumbers :: [Int]
-allRequestNumbers = [start .. total]
+--allRequestNumbers = [start .. total]
+allRequestNumbers = [
+                      047746
+                    , 081560
+                    , 092379
+                    , 120726
+                    , 128670
+                    , 150385
+                    , 155625
+                    , 194418
+                    , 212431
+                    , 219315
+                    , 295769
+                    , 442124
+                    , 471895
+                    ]
 
 printStatusEvery :: Int
 printStatusEvery = 10000
@@ -91,6 +106,7 @@ doResponse reqNum response =
 
 doRequest :: (Manager, Int, String) -> IO ()
 doRequest (manager, reqNum, reqUrl) = do
+    putStrLn $ "reqNum: " ++ show reqNum ++ ", url: " ++ reqUrl
     req <- request reqUrl
     catch (withResponse req manager $ doResponse reqNum)
           (\err -> writeFile (errFilePath reqNum) $ show (err::HttpException) ++ "\n")
@@ -112,5 +128,5 @@ main = do
           , managerResponseTimeout = Just $ responseTimeoutSeconds * 1000000
           }
     allDetailsList <- lines <$> readFile allDetailsPath
-    withManager managerSettings $ doRequestsThreadPool allDetailsList
-
+    let linesToFind = map (\x -> allDetailsList !! (x - 1)) allRequestNumbers
+    withManager managerSettings $ doRequestsThreadPool linesToFind
