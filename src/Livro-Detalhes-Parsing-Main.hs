@@ -9,7 +9,6 @@ import Data.String (fromString)
 import qualified Data.Text as Text
 import qualified Data.Text.IO as TextIO
 --import Debug.Trace (traceIO)
-import System.IO (withFile, IOMode(WriteMode))
 import qualified Text.HTML.DOM as TextHTMLDOM
 import Text.Printf (printf)
 import Text.XML.Cursor (($//), (&|), (&/), (>=>), child, content, Cursor, element, fromDocument)
@@ -23,14 +22,10 @@ start :: Int
 start = 1
 
 total :: Int
-total = 20
---total = 3
+total = 488562
 
 allRequestNumbers :: [Int]
 allRequestNumbers = [start .. total]
-
-printStatusEvery :: Int
-printStatusEvery = 1
 
 concurrentConnectionCount :: Int
 concurrentConnectionCount = 1
@@ -41,9 +36,6 @@ concurrentConnectionCount = 1
 
 inFilePath :: Int -> FilePath
 inFilePath = printf "output/detalhes/%06d.html"
-
-outFilePath :: Int -> FilePath
-outFilePath = printf "output/parsed/%06d.html"
 
 errFilePath :: Int -> FilePath
 errFilePath = printf "output/err/%06d.html"
@@ -64,26 +56,14 @@ threadPoolIO nr mutator = do
 -------------------------------------------------------------------
 
 doParse :: Int -> IO ()
-doParse reqNum = doParse' >> printStatus
+doParse reqNum = doParse'
   where
-    printStatus :: IO ()
-    --printStatus = when (reqNum `mod` printStatusEvery == 0) $ print reqNum
-    printStatus = return ()
-
     doParse' :: IO ()
-    -- doParse' = withFile (outFilePath reqNum) WriteMode $ \outFileHandle -> do
-    --               withFile (inFilePath reqNum) WriteMode $ \inFileHandle -> do
-    --           let lazybody = responseBody response
-    --           bytestrings <- brConsume lazybody
-    --           forM_ bytestrings $ \bs -> ByteStringStrict.hPut fileHandle bs
-    --           ByteStringStrict.hPut fileHandle "\n"
     doParse' = do
       document <- TextHTMLDOM.readFile $ fromString $ inFilePath reqNum
       let cursor = fromDocument document
       let familyData = cursor $// findNodes &| child &| content
       let fixedFamilyData = (Text.pack $ show reqNum) : fixFamilyData familyData
-      --print $ length fixedFamilyData
-      --print fixedFamilyData
       TextIO.putStrLn $ Text.intercalate " ; " $ map Text.strip fixedFamilyData
       return ()
 
@@ -95,8 +75,6 @@ doParse reqNum = doParse' >> printStatus
     fixFamilyData = map fixElement
 
     findNodes :: Cursor -> [Cursor]
-    --findNodes = element "tr" >=> child
-    --findNodes = element "tr" >=> child &/ element "div" >=> child
     findNodes = element "tr" >=> child &/ element "div"
 
 
