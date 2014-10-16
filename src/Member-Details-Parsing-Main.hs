@@ -22,7 +22,7 @@ start :: Int
 start = 1
 
 total :: Int
-total = 20
+total = 488562
 
 allRequestNumbers :: [Int]
 allRequestNumbers = [start .. total]
@@ -76,8 +76,6 @@ doParse reqNum = do
     process :: [Text.Text] -> IO()
     process familyData = do
       checkNull familyData
-      --print $ length familyData
-      --print familyData
       let chunkedFamilyData = chunksOf 13 familyData
       forM_ chunkedFamilyData processChunk
 
@@ -99,7 +97,6 @@ doParse reqNum = do
           TextIO.putStrLn $ Text.intercalate " ; " $ map Text.strip $ textShow reqNum : chunk
 
     findNodes :: Cursor -> [Cursor]
-    --findNodes = element "tr" >=> child &/ element "td"
     findNodes =
         element "table" >=> attributeIs "width" "908" &//
             element "tr" &/
