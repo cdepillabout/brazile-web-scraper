@@ -3,8 +3,7 @@
 import Control.Concurrent (forkIO)
 import Control.Concurrent.Chan (Chan, newChan, readChan, writeChan, writeList2Chan)
 import Control.Exception (catch, IOException)
-import Control.Monad (forever, forM_, when)
-import Data.Functor ((<$>))
+import Control.Monad (forever, forM_)
 import Data.String (fromString)
 import qualified Data.Text as Text
 import qualified Data.Text.IO as TextIO
@@ -63,8 +62,14 @@ doParse reqNum = doParse'
       document <- TextHTMLDOM.readFile $ fromString $ inFilePath reqNum
       let cursor = fromDocument document
       let familyData = cursor $// findNodes &| child &| content
-      let fixedFamilyData = (Text.pack $ show reqNum) : fixFamilyData familyData
-      TextIO.putStrLn $ Text.intercalate " ; " $ map Text.strip fixedFamilyData
+      let fixedFamilyData = (Text.pack . show $ reqNum) : fixFamilyData familyData
+      let noNewLinesFamilyData =
+            map (Text.replace ";" "," . Text.replace "\n" " -- ") fixedFamilyData
+      let finalLine = Text.intercalate " ; " $ map Text.strip noNewLinesFamilyData
+      TextIO.putStrLn finalLine
+      --print $ length noNewLinesFamilyData
+      --print $ length $ Text.splitOn ";" finalLine
+      --putStrLn ""
       return ()
 
     fixElement :: [[Text.Text]] -> Text.Text
@@ -79,7 +84,7 @@ doParse reqNum = doParse'
 
 
 doParseWrapper :: Int -> IO ()
-doParseWrapper reqNum = do
+doParseWrapper reqNum =
     catch (doParse reqNum)
           (\err -> writeFile (errFilePath reqNum) $ show (err::IOException) ++ "\n")
 
